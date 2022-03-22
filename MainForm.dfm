@@ -386,7 +386,7 @@ object Form1: TForm1
           Left = 0
           Top = 0
           Width = 911
-          Height = 313
+          Height = 297
           Align = alCustom
           Font.Charset = DEFAULT_CHARSET
           Font.Color = clWindowText
@@ -402,6 +402,15 @@ object Form1: TForm1
           Gutter.Font.Name = 'Consolas'
           Gutter.Font.Style = []
           Highlighter = SynPythonSyn
+        end
+        object ButtonTestModel: TButton
+          Left = 816
+          Top = 308
+          Width = 95
+          Height = 25
+          Caption = 'Test'
+          TabOrder = 1
+          OnClick = ButtonTestModelClick
         end
       end
     end

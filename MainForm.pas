@@ -50,16 +50,18 @@ type
     OpenTextFileDialog_CallbackScript: TOpenTextFileDialog;
     TabSheetModelDefinition: TTabSheet;
     SynEditModelDefinition: TSynEdit;
+    ButtonTestModel: TButton;
     procedure btnRunClick(Sender: TObject);
     procedure PythonEngineBeforeLoad(Sender: TObject);
     procedure FormCreate(Sender: TObject);
 
 
     procedure ButtonClearClick(Sender: TObject);
-    procedure SpeedButton1Click(Sender: TObject);
+
     procedure ComboBoxJuPyTokenDropDown(Sender: TObject);
     procedure ButtonRunTrainingClick(Sender: TObject);
     procedure ButtonInterruptClick(Sender: TObject);
+    procedure ButtonTestModelClick(Sender: TObject);
 
 
   private
@@ -83,6 +85,7 @@ type
 
     procedure DefineDelphiCallback();
     procedure RunTrainingSession();
+    procedure RunTesting();
 
     private
     SeriesByMetric: TStringList;
@@ -186,6 +189,11 @@ begin
   ButtonRunTraining.Enabled := True;
 end;
 
+procedure TForm1.ButtonTestModelClick(Sender: TObject);
+begin
+  RunTesting();
+end;
+
 procedure TForm1.ComboBoxJuPyTokenDropDown(Sender: TObject);
 begin
   if (ComboBoxJuPyToken.ItemIndex < 0) or (ComboBoxJuPyToken.Text = '')  then
@@ -270,15 +278,6 @@ begin
     end;
 end;
 
-procedure TForm1.SpeedButton1Click(Sender: TObject);
-begin
-  if OpenTextFileDialog1.Execute() then
-  begin
-//    LabeledEdit1.Text := OpenTextFileDialog1.FileName;
-//    Memo1.Lines.LoadFromFile(OpenTextFileDialog1.FileName);
-  end;
-end;
-
 function TForm1.training_callback(pself, args: PPyObject): PPyObject;
 var
     varArr: Variant;
@@ -341,8 +340,7 @@ const TOKENTOKEN = '?token=';
 begin
   RESULT := TStringList.Create;
   var cmdlines := TStringList.Create();
-  //cmdlines.Add('import os');
-  //cmdlines.Add('os.system(''cmd /c "jupyter notebook list"'')');
+
   cmdlines.Add('import subprocess');
   cmdlines.Add('result = subprocess.run(["jupyter", "notebook", "list"], stdout=subprocess.PIPE)');
   cmdlines.Add('print(result.stdout)');
@@ -357,6 +355,12 @@ begin
       RESULT.Add(token);
     end;
   end;
+end;
+
+procedure TForm1.RunTesting;
+begin
+  var testingScript := SynEditModelTesting.Text;
+  PythonEngine.ExecString(UTF8Encode(testingScript));
 end;
 
 procedure TForm1.RunTrainingSession;
