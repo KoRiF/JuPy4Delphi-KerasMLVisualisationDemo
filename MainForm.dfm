@@ -260,10 +260,17 @@ object Form1: TForm1
       object TabSheetDataDefinitions: TTabSheet
         Caption = 'Data'
         ImageIndex = 1
+        object SpeedButtonLoadTrainData: TSpeedButton
+          Left = 279
+          Top = 13
+          Width = 18
+          Height = 21
+          OnClick = SpeedButtonLoadTrainDataClick
+        end
         object SynEditDataDefinition: TSynEdit
-          Left = 0
+          Left = 312
           Top = 0
-          Width = 911
+          Width = 617
           Height = 313
           Align = alCustom
           Font.Charset = DEFAULT_CHARSET
@@ -280,6 +287,86 @@ object Form1: TForm1
           Gutter.Font.Name = 'Consolas'
           Gutter.Font.Style = []
           Highlighter = SynPythonSyn
+        end
+        object StringGridXtrain: TStringGrid
+          Left = 48
+          Top = 40
+          Width = 174
+          Height = 197
+          ColCount = 11
+          DefaultColWidth = 32
+          DefaultRowHeight = 16
+          RowCount = 10
+          Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goFixedRowDefAlign]
+          TabOrder = 1
+          RowHeights = (
+            16
+            16
+            16
+            16
+            16
+            16
+            16
+            16
+            16
+            16)
+        end
+        object StringGridYtrain: TStringGrid
+          Left = 217
+          Top = 40
+          Width = 89
+          Height = 197
+          ColCount = 1
+          DefaultColWidth = 32
+          DefaultRowHeight = 16
+          FixedCols = 0
+          RowCount = 10
+          Options = [goFixedVertLine, goFixedHorzLine, goVertLine, goHorzLine, goRangeSelect, goEditing, goFixedRowDefAlign]
+          TabOrder = 2
+          RowHeights = (
+            16
+            16
+            16
+            16
+            16
+            15
+            16
+            16
+            16
+            16)
+        end
+        object SpinEditTrainSamplesNumber: TSpinEdit
+          Left = 1
+          Top = 40
+          Width = 41
+          Height = 22
+          MaxValue = 0
+          MinValue = 0
+          TabOrder = 3
+          Value = 0
+          OnChange = SpinEditTrainSamplesNumberChange
+        end
+        object SpinEditTrainFeaturesNumber: TSpinEdit
+          Left = 48
+          Top = 12
+          Width = 33
+          Height = 22
+          MaxValue = 0
+          MinValue = 0
+          TabOrder = 4
+          Value = 0
+          OnChange = SpinEditTrainFeaturesNumberChange
+        end
+        object LabeledEditTrainDataFile: TLabeledEdit
+          Left = 87
+          Top = 13
+          Width = 194
+          Height = 21
+          EditLabel.Width = 69
+          EditLabel.Height = 13
+          EditLabel.Caption = 'Train Data File'
+          TabOrder = 5
+          Text = ''
         end
       end
       object TabSheetModelDefinition: TTabSheet
@@ -383,9 +470,9 @@ object Form1: TForm1
         Caption = 'Testing'
         ImageIndex = 5
         object SynEditModelTesting: TSynEdit
-          Left = 0
-          Top = 0
-          Width = 911
+          Left = 328
+          Top = 5
+          Width = 607
           Height = 297
           Align = alCustom
           Font.Charset = DEFAULT_CHARSET
@@ -411,6 +498,72 @@ object Form1: TForm1
           Caption = 'Test'
           TabOrder = 1
           OnClick = ButtonTestModelClick
+        end
+        object StringGrid1: TStringGrid
+          Left = 56
+          Top = 48
+          Width = 174
+          Height = 197
+          ColCount = 11
+          DefaultColWidth = 32
+          DefaultRowHeight = 16
+          RowCount = 10
+          TabOrder = 2
+          RowHeights = (
+            16
+            16
+            16
+            16
+            16
+            16
+            16
+            16
+            16
+            16)
+        end
+        object StringGrid2: TStringGrid
+          Left = 225
+          Top = 48
+          Width = 89
+          Height = 197
+          ColCount = 2
+          DefaultColWidth = 32
+          DefaultRowHeight = 16
+          RowCount = 10
+          TabOrder = 3
+          RowHeights = (
+            16
+            16
+            16
+            16
+            16
+            15
+            16
+            16
+            16
+            16)
+        end
+        object SpinEditNTestSamples: TSpinEdit
+          Left = 9
+          Top = 48
+          Width = 41
+          Height = 22
+          MaxValue = 0
+          MinValue = 0
+          TabOrder = 4
+          Value = 0
+          OnChange = SpinEditTrainSamplesNumberChange
+        end
+        object LabeledEditTestDataFile: TLabeledEdit
+          Left = 95
+          Top = 21
+          Width = 194
+          Height = 21
+          EditLabel.Width = 66
+          EditLabel.Height = 13
+          EditLabel.Caption = 'Test Data File'
+          TabOrder = 5
+          Text = ''
         end
       end
     end
@@ -473,9 +626,11 @@ object Form1: TForm1
     Left = 877
     Top = 149
   end
-  object OpenTextFileDialog1: TOpenTextFileDialog
-    Left = 269
-    Top = 53
+  object OpenTextFileDialogTrainingData: TOpenTextFileDialog
+    Filter = 'Tab separated values|*.tsv'
+    Title = 'Open Training Data'
+    Left = 253
+    Top = 61
   end
   object FDGUIxAsyncExecuteDialog1: TFDGUIxAsyncExecuteDialog
     Provider = 'Forms'
@@ -484,6 +639,7 @@ object Form1: TForm1
   end
   object OpenTextFileDialog_CallbackScript: TOpenTextFileDialog
     DefaultExt = 'py'
+    Title = 'Open Callback Definition Script'
     Left = 253
     Top = 357
   end

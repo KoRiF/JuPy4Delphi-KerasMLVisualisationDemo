@@ -11,7 +11,8 @@ uses
   WrapDelphi,
   Vcl.ExtCtrls, Vcl.Mask, Vcl.Buttons, Vcl.ExtDlgs, FireDAC.UI.Intf,
   FireDAC.VCLUI.Async, FireDAC.Stan.Intf, FireDAC.Comp.UI, VclTee.TeeGDIPlus,
-  VCLTee.TeEngine, VCLTee.TeeProcs, VCLTee.Chart, VCLTee.Series;
+  VCLTee.TeEngine, VCLTee.TeeProcs, VCLTee.Chart, VCLTee.Series, Vcl.Grids,
+  Vcl.Samples.Spin;
 
 type
   TForm1 = class(TForm)
@@ -36,7 +37,7 @@ type
     PythonModule1: TPythonModule;
     PyDelphiWrapper1: TPyDelphiWrapper;
     CheckBoxStripCellCode: TCheckBox;
-    OpenTextFileDialog1: TOpenTextFileDialog;
+    OpenTextFileDialogTrainingData: TOpenTextFileDialog;
     ComboBoxJuPyToken: TComboBox;
     TabSheetModelTraining: TTabSheet;
     TabSheetModelTesting: TTabSheet;
@@ -51,6 +52,16 @@ type
     TabSheetModelDefinition: TTabSheet;
     SynEditModelDefinition: TSynEdit;
     ButtonTestModel: TButton;
+    StringGridXtrain: TStringGrid;
+    StringGridYtrain: TStringGrid;
+    SpinEditTrainSamplesNumber: TSpinEdit;
+    SpinEditTrainFeaturesNumber: TSpinEdit;
+    LabeledEditTrainDataFile: TLabeledEdit;
+    StringGrid1: TStringGrid;
+    StringGrid2: TStringGrid;
+    SpinEditNTestSamples: TSpinEdit;
+    LabeledEditTestDataFile: TLabeledEdit;
+    SpeedButtonLoadTrainData: TSpeedButton;
     procedure btnRunClick(Sender: TObject);
     procedure PythonEngineBeforeLoad(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -62,6 +73,9 @@ type
     procedure ButtonRunTrainingClick(Sender: TObject);
     procedure ButtonInterruptClick(Sender: TObject);
     procedure ButtonTestModelClick(Sender: TObject);
+    procedure SpinEditTrainSamplesNumberChange(Sender: TObject);
+    procedure SpinEditTrainFeaturesNumberChange(Sender: TObject);
+    procedure SpeedButtonLoadTrainDataClick(Sender: TObject);
 
 
   private
@@ -87,6 +101,8 @@ type
     procedure RunTrainingSession();
     procedure RunTesting();
 
+    procedure ReshapeDataGrid(SpEdNSamples, SpEdNFeatures: TSpinEdit; GridX, GridY: TStringGrid);
+    procedure LoadDataToGrid(DataFilename: string; Delimiter: char; GridX, GridY: TStringGrid; SpinSamples, SpinFeatures: TSpinEdit);
     private
     SeriesByMetric: TStringList;
     function training_callback(pself, args : PPyObject): PPyObject; cdecl;
@@ -249,6 +265,10 @@ begin
   jupyCells := TDictionary<String, String>.Create();
 
   SeriesByMetric := TStringList.Create;
+
+  StringGridXtrain.Cells[0, 0] := 'X';
+  StringGridYtrain.Cells[0, 0] := 'Y';
+
 end;
 
 function TForm1.getJupyFilepath: string;
@@ -266,6 +286,50 @@ begin
   RESULT := ComboBoxJupyToken.Text;
 end;
 
+
+procedure TForm1.LoadDataToGrid(DataFilename: string; Delimiter: char; GridX, GridY: TStringGrid; SpinSamples, SpinFeatures: TSpinEdit);
+begin
+  //clear data
+  GridX.RowCount := GridX.FixedRows;
+  GridY.RowCount := GridY.FixedRows;
+
+  var FileDataList := TStringList.Create;
+  try
+    var LineDataList := TStringList.Create;
+    LineDataList.Delimiter := Delimiter;
+    try
+      FileDataList.LoadFromFile(DataFileName);
+      GridX.ColCount := 0;
+
+      GridX.RowCount := 1 + FileDataList.Count;
+      GridX.FixedRows := 1;
+
+      GridY.RowCount := 1 + FileDataList.Count;
+      GridY.FixedRows := 1;
+
+      for var Row := 0 to FileDataList.Count-1 do
+      begin
+        LineDataList.DelimitedText := FileDataList[Row];
+
+        GridY.Cells[0, Row + 1] := LineDataList[0];
+
+        var NLineFeatures := LineDataList.Count - 1;
+        if NLineFeatures > GridX.ColCount then
+          GridX.ColCount := NLineFeatures;
+
+        for var Col := 0 to NLineFeatures - 1 do
+            GridX.Cells[Col, Row + 1] := LineDataList[Col + 1]
+
+      end;
+      SpinFeatures.Text := IntToStr(GridX.ColCount);
+      SpinSamples.Text := IntToStr(GridY.RowCount - 1);
+    finally
+      LineDataList.Free;
+    end;
+  finally
+    FileDataList.Free;
+  end;
+end;
 
 procedure TForm1.LoadPySourceFromCell(const cellTag: string; SynEditPy: TSynEdit; doStrip: boolean);
 begin
@@ -355,6 +419,52 @@ begin
       RESULT.Add(token);
     end;
   end;
+end;
+
+procedure TForm1.SpeedButtonLoadTrainDataClick(Sender: TObject);
+begin
+  if not FileExists(LabeledEditTrainDataFile.Text) then
+    if  OpenTextFileDialogTrainingData.Execute() then
+      LabeledEditTrainDataFile.Text := OpenTextFileDialogTrainingData.FileName
+    else
+      Exit;
+
+  LoadDataToGrid(LabeledEditTrainDataFile.Text, TAB, StringGridXtrain, StringGridYtrain, SpinEditTrainSamplesNumber, SpinEditTrainFeaturesNumber);
+
+end;
+
+procedure TForm1.SpinEditTrainFeaturesNumberChange(Sender: TObject);
+begin
+  if StringGridXtrain.ColCount = StrToInt(SpinEditTrainFeaturesNumber.Text) then
+    Exit;
+
+  ReshapeDataGrid(SpinEditTrainSamplesNumber, SpinEditTrainFeaturesNumber, StringGridXtrain, StringGridYtrain);
+  LabeledEditTrainDataFile.Text := '';
+end;
+
+procedure TForm1.SpinEditTrainSamplesNumberChange(Sender: TObject);
+begin
+  if StringGridYtrain.RowCount = 1 + StrToInt(SpinEditTrainSamplesNumber.Text) then
+    Exit;
+
+  ReshapeDataGrid(SpinEditTrainSamplesNumber, SpinEditTrainFeaturesNumber, StringGridXtrain, StringGridYtrain);
+  LabeledEditTrainDataFile.Text := '';
+end;
+
+procedure TForm1.ReshapeDataGrid(SpEdNSamples, SpEdNFeatures: TSpinEdit; GridX,
+  GridY: TStringGrid);
+begin
+  var NSamples := StrToInt(SpEdNSamples.Text);
+  if SpEdNFeatures <> nil then
+  begin
+    var NFeatures := StrToInt(SpEdNFeatures.Text);
+    GridX.ColCount := NFeatures + GridX.FixedCols;
+  end;
+  GridX.RowCount := Nsamples + GridX.FixedRows;
+  GridY.RowCount := Nsamples + GridY.FixedRows;
+
+
+  GridY.ColCount := 1 + GridY.FixedCols;
 end;
 
 procedure TForm1.RunTesting;
