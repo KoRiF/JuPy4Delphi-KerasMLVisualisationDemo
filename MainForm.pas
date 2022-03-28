@@ -108,6 +108,7 @@ type
     procedure ReshapeDataGrid(SpEdNSamples, SpEdNFeatures: TSpinEdit; GridX, GridY: TStringGrid);
     procedure LoadDataToGrid(DataFilename: string; Delimiter: char; GridX, GridY: TStringGrid; SpinSamples, SpinFeatures: TSpinEdit);
     procedure ExecFillPyListFromGrid(Identifier: string; Grid: TStringGrid; dims: Integer = 1);
+    procedure ExecFillGridColumnFromPyList(Identifier: string; Grid: TStringGrid; ColIx: Integer);
     private
     SeriesByMetric: TStringList;
     function training_callback(pself, args : PPyObject): PPyObject; cdecl;
@@ -228,7 +229,13 @@ end;
 
 procedure TForm1.ButtonTestModelClick(Sender: TObject);
 begin
+  ExecFillPyListFromGrid('XX_test', StringGridXtest, 2);
+  ExecFillPyListFromGrid('yy_test', StringGridYtest);
+
   RunTesting();
+
+  ExecFillGridColumnFromPyList('yy_pred', StringGridYtest, 1);
+  ExecFillGridColumnFromPyList('errors', StringGridYtest, 2);
 end;
 
 procedure TForm1.ComboBoxJuPyTokenDropDown(Sender: TObject);
@@ -276,6 +283,21 @@ begin
   end;
 end;
 
+procedure TForm1.ExecFillGridColumnFromPyList(Identifier: string;
+  Grid: TStringGrid; ColIx: Integer);
+var
+  offset: Integer;
+begin
+  offset := Grid.FixedRows;
+  var GridMaxRowIx := Grid.RowCount - offset - 1;
+  with PythonEngine do
+    for var row := 0 to GridMaxRowIx do
+    begin
+      var PPyObj := EvalString(String.Format('%s[%d]', [Identifier, row]));
+      Grid.Cells[colIx, offset + row] := PyObjectAsString(PPyObj);
+    end;
+end;
+
 procedure TForm1.ExecFillPyListFromGrid(Identifier: string; Grid: TStringGrid;
   dims: Integer);
 begin
@@ -316,7 +338,9 @@ begin
   StringGridYtrain.Cells[0, 0] := 'Y';
 
   StringGridXtest.Cells[0, 0] := 'X';
-  StringGridYTest.Cells[0, 0] := 'Y';
+  StringGridYTest.Cells[0, 0] := 'Y0';
+  StringGridYTest.Cells[1, 0] := 'Ytest';
+  StringGridYTest.Cells[2, 0] := 'error';
 end;
 
 function TForm1.getJupyFilepath: string;

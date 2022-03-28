@@ -540,9 +540,9 @@ object Form1: TForm1
         object StringGridYtest: TStringGrid
           Left = 225
           Top = 48
-          Width = 89
+          Width = 104
           Height = 197
-          ColCount = 2
+          ColCount = 3
           DefaultColWidth = 32
           DefaultRowHeight = 16
           RowCount = 10
