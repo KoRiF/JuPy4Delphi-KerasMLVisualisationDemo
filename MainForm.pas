@@ -66,6 +66,9 @@ type
     SpeedButtonLoadTestData: TSpeedButton;
     OpenTextFileDialogTestData: TOpenTextFileDialog;
     SpinEditTestFeaturesNumber: TSpinEdit;
+    TabSheetPlots: TTabSheet;
+    SynEditPlotting: TSynEdit;
+    ButtonPlots: TButton;
     procedure btnRunClick(Sender: TObject);
     procedure PythonEngineBeforeLoad(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -80,6 +83,7 @@ type
     procedure ButtonPassTrainDataClick(Sender: TObject);
     procedure SpinEditTestSamplesNumberChange(Sender: TObject);
     procedure SpeedButtonLoadTestDataClick(Sender: TObject);
+    procedure ButtonPlotsClick(Sender: TObject);
 
 
   private
@@ -88,7 +92,7 @@ type
     const TAB_IX_MODELTRAIN = 3;
     const TAB_IX_MONITOR = 4;
     const TAB_IX_MODELTEST = 5;
-
+    const TAB_IX_PLOTS = 6;
   private
     { Private declarations }
     _Interruption: boolean;
@@ -104,6 +108,7 @@ type
     procedure DefineDelphiCallback();
     function RunTrainingSession(): boolean;
     procedure RunTesting();
+    procedure ShowPlots();
 
     procedure ReshapeDataGrid(SpEdNSamples, SpEdNFeatures: TSpinEdit; GridX, GridY: TStringGrid);
     procedure LoadDataToGrid(DataFilename: string; Delimiter: char; GridX, GridY: TStringGrid; SpinSamples, SpinFeatures: TSpinEdit);
@@ -166,6 +171,7 @@ begin
     LoadPySourceFromCell('Model Definition', SynEditModelDefinition, CheckBoxStripCellCode.Checked);
     LoadPySourceFromCell('Model Training', SynEditModelTraining, CheckBoxStripCellCode.Checked);
     LoadPySourceFromCell('Model Testing', SynEditModelTesting, CheckBoxStripCellCode.Checked);
+    LoadPySourceFromCell('Resulting Plots', SynEditPlotting, CheckBoxStripCellCode.Checked);
 
     ShowMessage('Successfully attached to the Jupyter Notebook!');
     Self.PageControl1.ActivePageIndex := TAB_IX_DATADEF;
@@ -188,6 +194,12 @@ begin
   var dataDefScript := SynEditDataDefinition.Text;
   PythonEngine.ExecString(dataDefScript);
 
+  PageControl1.ActivePageIndex := TAB_IX_MODELTRAIN;
+end;
+
+procedure TForm1.ButtonPlotsClick(Sender: TObject);
+begin
+  ShowPlots();
   PageControl1.ActivePageIndex := TAB_IX_MODELTRAIN;
 end;
 
@@ -236,6 +248,8 @@ begin
 
   ExecFillGridColumnFromPyList('yy_pred', StringGridYtest, 1);
   ExecFillGridColumnFromPyList('errors', StringGridYtest, 2);
+
+  PageControl1.ActivePageIndex := TAB_IX_PLOTS;
 end;
 
 procedure TForm1.ComboBoxJuPyTokenDropDown(Sender: TObject);
@@ -491,6 +505,12 @@ begin
       RESULT.Add(token);
     end;
   end;
+end;
+
+procedure TForm1.ShowPlots;
+begin
+  var plottingScript := SynEditPlotting.Text;
+  PythonEngine.ExecString(UTF8Encode(plottingScript));
 end;
 
 procedure TForm1.SpeedButtonLoadTestDataClick(Sender: TObject);

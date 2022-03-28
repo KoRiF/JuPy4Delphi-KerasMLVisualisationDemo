@@ -593,6 +593,40 @@ object Form1: TForm1
           OnChange = SpinEditTrainFeaturesNumberChange
         end
       end
+      object TabSheetPlots: TTabSheet
+        Caption = 'Plots'
+        ImageIndex = 6
+        object SynEditPlotting: TSynEdit
+          Left = 325
+          Top = 5
+          Width = 607
+          Height = 297
+          Align = alCustom
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Consolas'
+          Font.Style = []
+          Font.Quality = fqClearTypeNatural
+          TabOrder = 0
+          UseCodeFolding = False
+          Gutter.Font.Charset = DEFAULT_CHARSET
+          Gutter.Font.Color = clWindowText
+          Gutter.Font.Height = -11
+          Gutter.Font.Name = 'Consolas'
+          Gutter.Font.Style = []
+          Highlighter = SynPythonSyn
+        end
+        object ButtonPlots: TButton
+          Left = 854
+          Top = 308
+          Width = 75
+          Height = 25
+          Caption = 'Show Plots'
+          TabOrder = 1
+          OnClick = ButtonPlotsClick
+        end
+      end
     end
     object HeaderControl1: THeaderControl
       Left = 1
