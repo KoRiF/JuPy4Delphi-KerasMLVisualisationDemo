@@ -368,6 +368,15 @@ object Form1: TForm1
           TabOrder = 5
           Text = ''
         end
+        object ButtonPassTrainData: TButton
+          Left = 144
+          Top = 299
+          Width = 153
+          Height = 25
+          Caption = 'Pass Data To Python Script'
+          TabOrder = 6
+          OnClick = ButtonPassTrainDataClick
+        end
       end
       object TabSheetModelDefinition: TTabSheet
         Caption = 'Model'
@@ -469,6 +478,13 @@ object Form1: TForm1
       object TabSheetModelTesting: TTabSheet
         Caption = 'Testing'
         ImageIndex = 5
+        object SpeedButtonLoadTestData: TSpeedButton
+          Left = 287
+          Top = 21
+          Width = 18
+          Height = 21
+          OnClick = SpeedButtonLoadTestDataClick
+        end
         object SynEditModelTesting: TSynEdit
           Left = 328
           Top = 5
@@ -499,7 +515,7 @@ object Form1: TForm1
           TabOrder = 1
           OnClick = ButtonTestModelClick
         end
-        object StringGrid1: TStringGrid
+        object StringGridXtest: TStringGrid
           Left = 56
           Top = 48
           Width = 174
@@ -521,7 +537,7 @@ object Form1: TForm1
             16
             16)
         end
-        object StringGrid2: TStringGrid
+        object StringGridYtest: TStringGrid
           Left = 225
           Top = 48
           Width = 89
@@ -543,7 +559,7 @@ object Form1: TForm1
             16
             16)
         end
-        object SpinEditNTestSamples: TSpinEdit
+        object SpinEditTestSamplesNumber: TSpinEdit
           Left = 9
           Top = 48
           Width = 41
@@ -552,7 +568,7 @@ object Form1: TForm1
           MinValue = 0
           TabOrder = 4
           Value = 0
-          OnChange = SpinEditTrainSamplesNumberChange
+          OnChange = SpinEditTestSamplesNumberChange
         end
         object LabeledEditTestDataFile: TLabeledEdit
           Left = 95
@@ -564,6 +580,17 @@ object Form1: TForm1
           EditLabel.Caption = 'Test Data File'
           TabOrder = 5
           Text = ''
+        end
+        object SpinEditTestFeaturesNumber: TSpinEdit
+          Left = 56
+          Top = 20
+          Width = 33
+          Height = 22
+          MaxValue = 0
+          MinValue = 0
+          TabOrder = 6
+          Value = 0
+          OnChange = SpinEditTrainFeaturesNumberChange
         end
       end
     end
@@ -642,5 +669,11 @@ object Form1: TForm1
     Title = 'Open Callback Definition Script'
     Left = 253
     Top = 357
+  end
+  object OpenTextFileDialogTestData: TOpenTextFileDialog
+    Filter = 'Tab separated values|*.tsv'
+    Title = 'Open Training Data'
+    Left = 261
+    Top = 69
   end
 end

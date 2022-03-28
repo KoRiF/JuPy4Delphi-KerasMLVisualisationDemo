@@ -57,17 +57,18 @@ type
     SpinEditTrainSamplesNumber: TSpinEdit;
     SpinEditTrainFeaturesNumber: TSpinEdit;
     LabeledEditTrainDataFile: TLabeledEdit;
-    StringGrid1: TStringGrid;
-    StringGrid2: TStringGrid;
-    SpinEditNTestSamples: TSpinEdit;
+    StringGridXtest: TStringGrid;
+    StringGridYtest: TStringGrid;
+    SpinEditTestSamplesNumber: TSpinEdit;
     LabeledEditTestDataFile: TLabeledEdit;
     SpeedButtonLoadTrainData: TSpeedButton;
+    ButtonPassTrainData: TButton;
+    SpeedButtonLoadTestData: TSpeedButton;
+    OpenTextFileDialogTestData: TOpenTextFileDialog;
+    SpinEditTestFeaturesNumber: TSpinEdit;
     procedure btnRunClick(Sender: TObject);
     procedure PythonEngineBeforeLoad(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-
-
-    procedure ButtonClearClick(Sender: TObject);
 
     procedure ComboBoxJuPyTokenDropDown(Sender: TObject);
     procedure ButtonRunTrainingClick(Sender: TObject);
@@ -76,6 +77,9 @@ type
     procedure SpinEditTrainSamplesNumberChange(Sender: TObject);
     procedure SpinEditTrainFeaturesNumberChange(Sender: TObject);
     procedure SpeedButtonLoadTrainDataClick(Sender: TObject);
+    procedure ButtonPassTrainDataClick(Sender: TObject);
+    procedure SpinEditTestSamplesNumberChange(Sender: TObject);
+    procedure SpeedButtonLoadTestDataClick(Sender: TObject);
 
 
   private
@@ -103,6 +107,7 @@ type
 
     procedure ReshapeDataGrid(SpEdNSamples, SpEdNFeatures: TSpinEdit; GridX, GridY: TStringGrid);
     procedure LoadDataToGrid(DataFilename: string; Delimiter: char; GridX, GridY: TStringGrid; SpinSamples, SpinFeatures: TSpinEdit);
+    procedure ExecFillPyListFromGrid(Identifier: string; Grid: TStringGrid; dims: Integer = 1);
     private
     SeriesByMetric: TStringList;
     function training_callback(pself, args : PPyObject): PPyObject; cdecl;
@@ -131,7 +136,8 @@ uses
   System.Threading,
   System.Math,
   UnitPy4DUtils,
-  System.JSON;
+  System.JSON,
+  VarPyth;
 const
   defaultHttpSocket = 'http://localhost:8888';
 
@@ -166,16 +172,22 @@ begin
   end;
 end;
 
-procedure TForm1.ButtonClearClick(Sender: TObject);
-begin
-  //Memo1.Lines.Clear();
-end;
-
 procedure TForm1.ButtonInterruptClick(Sender: TObject);
 begin
   Self.Interruption := True;
   ButtonInterrupt.Enabled := False;
   ButtonRunTraining.Enabled := True;
+end;
+
+procedure TForm1.ButtonPassTrainDataClick(Sender: TObject);
+begin
+  ExecFillPyListFromGrid('XX', StringGridXtrain, 2);
+  ExecFillPyListFromGrid('yy', StringGridYtrain);
+
+  var dataDefScript := SynEditDataDefinition.Text;
+  PythonEngine.ExecString(dataDefScript);
+
+  PageControl1.ActivePageIndex := TAB_IX_MODELTRAIN;
 end;
 
 procedure TForm1.ButtonRunTrainingClick(Sender: TObject);
@@ -255,6 +267,31 @@ begin
   end;
 end;
 
+procedure TForm1.ExecFillPyListFromGrid(Identifier: string; Grid: TStringGrid;
+  dims: Integer);
+begin
+  with PythonEngine do
+  begin
+    var Ndatarows := Grid.RowCount - Grid.FixedRows;
+    PythonEngine.ExecString(String.Format('%s = [None]* %d',[Identifier, Ndatarows]));
+    for var  row := 0 to Ndatarows - 1 do
+    begin
+      if dims = 1 then
+      begin
+        PythonEngine.ExecString(String.Format('%s[%d] = %s',[Identifier, row, Grid.Cells[0, row + 1]]));
+        continue;
+      end;
+
+      var Ndatacolumns := Grid.ColCount;
+      PythonEngine.ExecString(String.Format('%s_ = [None]* %d',[Identifier, Ndatacolumns]));
+      for var col := 0 to Ndatacolumns - 1 do
+        PythonEngine.ExecString(String.Format('%s_[%d] = %s',[Identifier, col, Grid.Cells[col, row + 1]]));
+
+      PythonEngine.ExecString(String.Format('%s[%d] = %s_',[Identifier, row, Identifier]));
+    end;
+  end;
+end;
+
 procedure TForm1.FormCreate(Sender: TObject);
 begin
   var Py := PyDelphiWrapper1.Wrap(Form1);
@@ -269,6 +306,8 @@ begin
   StringGridXtrain.Cells[0, 0] := 'X';
   StringGridYtrain.Cells[0, 0] := 'Y';
 
+  StringGridXtest.Cells[0, 0] := 'X';
+  StringGridYTest.Cells[0, 0] := 'Y';
 end;
 
 function TForm1.getJupyFilepath: string;
@@ -421,6 +460,18 @@ begin
   end;
 end;
 
+procedure TForm1.SpeedButtonLoadTestDataClick(Sender: TObject);
+begin
+  if not FileExists(LabeledEditTestDataFile.Text) then
+    if  OpenTextFileDialogTestData.Execute() then
+      LabeledEditTestDataFile.Text := OpenTextFileDialogTestData.FileName
+    else
+      Exit;
+
+  LoadDataToGrid(LabeledEditTestDataFile.Text, TAB, StringGridXtest, StringGridYtest, SpinEditTestSamplesNumber, SpinEditTestFeaturesNumber);
+
+end;
+
 procedure TForm1.SpeedButtonLoadTrainDataClick(Sender: TObject);
 begin
   if not FileExists(LabeledEditTrainDataFile.Text) then
@@ -431,6 +482,15 @@ begin
 
   LoadDataToGrid(LabeledEditTrainDataFile.Text, TAB, StringGridXtrain, StringGridYtrain, SpinEditTrainSamplesNumber, SpinEditTrainFeaturesNumber);
 
+end;
+
+procedure TForm1.SpinEditTestSamplesNumberChange(Sender: TObject);
+begin
+  if StringGridYtest.RowCount = 1 + StrToInt(SpinEditTestSamplesNumber.Text) then
+    Exit;
+
+  ReshapeDataGrid(SpinEditTrainSamplesNumber, SpinEditTrainFeaturesNumber, StringGridXtrain, StringGridYtrain);
+  LabeledEditTrainDataFile.Text := '';
 end;
 
 procedure TForm1.SpinEditTrainFeaturesNumberChange(Sender: TObject);
@@ -475,9 +535,6 @@ end;
 
 procedure TForm1.RunTrainingSession;
 begin
-  var dataDefScript := SynEditDataDefinition.Text;
-  PythonEngine.ExecString(dataDefScript);
-
   var modelDefScript := SynEditModelDefinition.Text;
   PythonEngine.ExecString(modelDefScript);
 
