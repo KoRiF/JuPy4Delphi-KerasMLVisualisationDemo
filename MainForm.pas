@@ -102,7 +102,7 @@ type
     procedure LoadPySourceFromCell(const cellTag: string; SynEditPy: TSynEdit; doStrip: boolean = True);
 
     procedure DefineDelphiCallback();
-    procedure RunTrainingSession();
+    function RunTrainingSession(): boolean;
     procedure RunTesting();
 
     procedure ReshapeDataGrid(SpEdNSamples, SpEdNFeatures: TSpinEdit; GridX, GridY: TStringGrid);
@@ -191,7 +191,9 @@ begin
 end;
 
 procedure TForm1.ButtonRunTrainingClick(Sender: TObject);
+var isTrainSessionCompleted: boolean;
 begin
+  Self.Interruption := False;
   ButtonInterrupt.Enabled := True;
   ButtonRunTraining.Enabled := False;
 
@@ -199,9 +201,10 @@ begin
 
   PythonModule1.Initialize;
   try
+  try
     DefineDelphiCallback();
     PageControl1.ActivePageIndex := TAB_IX_MONITOR;
-    RunTrainingSession();
+    isTrainSessionCompleted := RunTrainingSession();
   except on Ex: EPySystemExit do
     begin
       var code := Ex.EValue;
@@ -213,8 +216,14 @@ begin
       else raise Ex;
     end;
   end;
-  ButtonInterrupt.Enabled := False;
-  ButtonRunTraining.Enabled := True;
+  finally
+    ButtonInterrupt.Enabled := False;
+    ButtonRunTraining.Enabled := True;
+  end;
+  if isTrainSessionCompleted then
+    PageControl1.ActivePageIndex := TAB_IX_MODELTEST
+  else
+    PageControl1.ActivePageIndex := TAB_IX_MODELTRAIN;
 end;
 
 procedure TForm1.ButtonTestModelClick(Sender: TObject);
@@ -533,13 +542,15 @@ begin
   PythonEngine.ExecString(UTF8Encode(testingScript));
 end;
 
-procedure TForm1.RunTrainingSession;
+function TForm1.RunTrainingSession(): boolean;
 begin
   var modelDefScript := SynEditModelDefinition.Text;
   PythonEngine.ExecString(modelDefScript);
 
   var trainingScript := SynEditModelTraining.Text;
   PythonEngine.ExecString(UTF8Encode(trainingScript));
+
+  RESULT := not Self.Interruption;
 end;
 
 procedure TForm1.PythonEngineBeforeLoad(Sender: TObject);
