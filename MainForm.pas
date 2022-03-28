@@ -69,6 +69,10 @@ type
     TabSheetPlots: TTabSheet;
     SynEditPlotting: TSynEdit;
     ButtonPlots: TButton;
+    TabSheetCallbacks: TTabSheet;
+    SynEditCallbacks: TSynEdit;
+    SpeedButtonOpenCallback: TSpeedButton;
+    CheckBoxShowCallbacksTab: TCheckBox;
     procedure btnRunClick(Sender: TObject);
     procedure PythonEngineBeforeLoad(Sender: TObject);
     procedure FormCreate(Sender: TObject);
@@ -84,15 +88,18 @@ type
     procedure SpinEditTestSamplesNumberChange(Sender: TObject);
     procedure SpeedButtonLoadTestDataClick(Sender: TObject);
     procedure ButtonPlotsClick(Sender: TObject);
+    procedure CheckBoxShowCallbacksTabClick(Sender: TObject);
+    procedure SpeedButtonOpenCallbackClick(Sender: TObject);
 
 
   private
     const TAB_IX_DATADEF = 1;
     const TAB_IX_MODELDEF = 2;
     const TAB_IX_MODELTRAIN = 3;
-    const TAB_IX_MONITOR = 4;
-    const TAB_IX_MODELTEST = 5;
-    const TAB_IX_PLOTS = 6;
+    const TAB_IX_CALLBACKS = 4;
+    const TAB_IX_MONITOR = 5;
+    const TAB_IX_MODELTEST = 6;
+    const TAB_IX_PLOTS = 7;
   private
     { Private declarations }
     _Interruption: boolean;
@@ -104,7 +111,7 @@ type
     function getJupySocket(): string;
 
     procedure LoadPySourceFromCell(const cellTag: string; SynEditPy: TSynEdit; doStrip: boolean = True);
-
+    procedure LoadDelphiCallback();
     procedure DefineDelphiCallback();
     function RunTrainingSession(): boolean;
     procedure RunTesting();
@@ -252,6 +259,11 @@ begin
   PageControl1.ActivePageIndex := TAB_IX_PLOTS;
 end;
 
+procedure TForm1.CheckBoxShowCallbacksTabClick(Sender: TObject);
+begin
+  PageControl1.Pages[TAB_IX_CALLBACKS].TabVisible := CheckBoxShowCallbacksTab.Checked;
+end;
+
 procedure TForm1.ComboBoxJuPyTokenDropDown(Sender: TObject);
 begin
   if (ComboBoxJuPyToken.ItemIndex < 0) or (ComboBoxJuPyToken.Text = '')  then
@@ -268,33 +280,7 @@ end;
 
 procedure TForm1.DefineDelphiCallback;
 begin
-  var callbackfile := 'delphi_training_callback.py';
-  if OpenTextFileDialog_CallbackScript.FileName = '' then
-  begin
-    OpenTextFileDialog_CallbackScript.InitialDir := ExtractFilePath(Application.ExeName);
-    OpenTextFileDialog_CallbackScript.FileName := callbackfile;
-  end
-  else
-    Exit;
-
-  if  OpenTextFileDialog_CallbackScript.Execute() then
-  begin
-    if not FileExists(OpenTextFileDialog_CallbackScript.FileName) then
-    begin
-      OpenTextFileDialog_CallbackScript.FileName := '';
-      Exit;
-    end;
-
-    var CallbackScript := TStringList.Create;
-    CallbackScript.LoadFromFile(OpenTextFileDialog_CallbackScript.FileName);
-    if CallbackScript.Text = '' then
-    begin
-      OpenTextFileDialog_CallbackScript.FileName := '';
-      Exit;
-    end;
-
-    PythonEngine.ExecString(UTF8Encode(CallbackScript.Text));  //   callbackscript.Text + #$D#$A +
-  end;
+    PythonEngine.ExecString(UTF8Encode(SynEditCallbacks.Text));  //   callbackscript.Text + #$D#$A +
 end;
 
 procedure TForm1.ExecFillGridColumnFromPyList(Identifier: string;
@@ -417,6 +403,24 @@ begin
   end;
 end;
 
+procedure TForm1.LoadDelphiCallback;
+begin
+  var callbackfile := 'delphi_training_callback.py';
+  OpenTextFileDialog_CallbackScript.InitialDir := ExtractFilePath(Application.ExeName);
+  OpenTextFileDialog_CallbackScript.FileName := callbackfile;
+
+  if  OpenTextFileDialog_CallbackScript.Execute() then
+  begin
+    if not FileExists(OpenTextFileDialog_CallbackScript.FileName) then
+    begin
+      OpenTextFileDialog_CallbackScript.FileName := '';
+      Exit;
+    end;
+
+    SynEditCallbacks.Lines.LoadFromFile(OpenTextFileDialog_CallbackScript.FileName);
+  end;
+end;
+
 procedure TForm1.LoadPySourceFromCell(const cellTag: string; SynEditPy: TSynEdit; doStrip: boolean);
 begin
     var pyCode := '';
@@ -535,6 +539,11 @@ begin
 
   LoadDataToGrid(LabeledEditTrainDataFile.Text, TAB, StringGridXtrain, StringGridYtrain, SpinEditTrainSamplesNumber, SpinEditTrainFeaturesNumber);
 
+end;
+
+procedure TForm1.SpeedButtonOpenCallbackClick(Sender: TObject);
+begin
+  LoadDelphiCallback();
 end;
 
 procedure TForm1.SpinEditTestSamplesNumberChange(Sender: TObject);

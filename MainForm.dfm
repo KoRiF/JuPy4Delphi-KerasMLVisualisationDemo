@@ -436,6 +436,75 @@ object Form1: TForm1
           TabOrder = 1
           OnClick = ButtonRunTrainingClick
         end
+        object CheckBoxShowCallbacksTab: TCheckBox
+          Left = 96
+          Top = 316
+          Width = 97
+          Height = 17
+          Caption = 'Show Callbacks'
+          TabOrder = 2
+          OnClick = CheckBoxShowCallbacksTabClick
+        end
+      end
+      object TabSheetCallbacks: TTabSheet
+        Caption = 'Callbacks'
+        ImageIndex = 7
+        TabVisible = False
+        object SpeedButtonOpenCallback: TSpeedButton
+          Left = 0
+          Top = 3
+          Width = 113
+          Height = 22
+          Caption = 'Load from file...'
+          OnClick = SpeedButtonOpenCallbackClick
+        end
+        object SynEditCallbacks: TSynEdit
+          Left = 0
+          Top = 31
+          Width = 932
+          Height = 305
+          Align = alBottom
+          Font.Charset = DEFAULT_CHARSET
+          Font.Color = clWindowText
+          Font.Height = -13
+          Font.Name = 'Consolas'
+          Font.Style = []
+          Font.Quality = fqClearTypeNatural
+          TabOrder = 0
+          UseCodeFolding = False
+          Gutter.Font.Charset = DEFAULT_CHARSET
+          Gutter.Font.Color = clWindowText
+          Gutter.Font.Height = -11
+          Gutter.Font.Name = 'Consolas'
+          Gutter.Font.Style = []
+          Highlighter = SynPythonSyn
+          Lines.Strings = (
+            #39#39#39
+            
+              '    A proxy unit to establish a callback bridge between a Delphi' +
+              ' based front-end and'
+            '    a Python-based training code for a deep learning model.'
+            ''
+            #39#39#39
+            'import json'
+            'from keras.callbacks import Callback'
+            ''
+            'import delphi_module'
+            ''
+            'class DelphiTrainingCallback(Callback):'
+            ''
+            '    def on_epoch_end(self, epoch, logs={}):'
+            '        print("\nlog:", json.dumps(logs))'
+            
+              '        #flag = delphy4python.training_callback(epoch, logs.get(' +
+              '"val_accuracy"), logs.get("val_loss"))'
+            
+              '        flag = delphi_module.training_callback(epoch, json.dumps' +
+              '(logs))'
+            '        if flag=="stop":'
+            '            print("Training is stopped by Delphi'#39's flag")'
+            '            self.model.stop_training = True')
+        end
       end
       object TabSheetMonitoring: TTabSheet
         Caption = 'Monitoring'
@@ -701,8 +770,8 @@ object Form1: TForm1
   object OpenTextFileDialog_CallbackScript: TOpenTextFileDialog
     DefaultExt = 'py'
     Title = 'Open Callback Definition Script'
-    Left = 253
-    Top = 357
+    Left = 205
+    Top = 365
   end
   object OpenTextFileDialogTestData: TOpenTextFileDialog
     Filter = 'Tab separated values|*.tsv'
